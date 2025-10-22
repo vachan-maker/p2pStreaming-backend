@@ -3,9 +3,9 @@ import path, { dirname } from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const uploadPath = path.join(__dirname,'uploads','videos');
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
+const uploadPath = path.join(process.cwd(), 'uploads', 'videos');
 
 //we are creating the disk storage engine
 //diskStorage is a function that takes an object with two functions as args. One is destination and the other is filename
