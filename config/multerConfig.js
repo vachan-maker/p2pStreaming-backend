@@ -1,6 +1,6 @@
 import multer from 'multer';
 import path from 'path';
-
+import fs from 'fs';
 //we are creating the disk storage engine
 //diskStorage is a function that takes an object with two functions as args. One is destination and the other is filename
 const storage = multer.diskStorage({
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 }
 )
 
-
+//we can limit the file size and also only allow .mp4 files with multer...coming soon!
 const upload = multer({storage})
 
 export {upload}
