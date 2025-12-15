@@ -1,25 +1,77 @@
 import multer from 'multer';
-import path, { dirname } from 'path';
+import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { randomUUID } from 'crypto';
 
-// Ensure the upload directory exists at startup
-const uploadPath = path.join(process.cwd(), 'uploads', 'videos'); // get the root directory and join it with uploads and videos
-fs.mkdirSync(uploadPath, { recursive: true });
+// File size limit: 500MB
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
-// we are creating the disk storage engine
-// diskStorage is a function that takes an object with two functions as args. One is destination and the other is filename
+// Allowed video MIME types
+const ALLOWED_MIME_TYPES = [
+    'video/mp4',
+    'video/avi',
+    'video/x-msvideo',
+    'video/quicktime',
+    'video/x-matroska',
+    'video/webm'
+];
+
+// Allowed file extensions
+const ALLOWED_EXTENSIONS = ['.mp4', '.avi', '.mov', '.mkv', '.webm'];
+
+// Create disk storage engine with dynamic directory creation
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, uploadPath); // callback function to tell Multer where to store the file
+        // Generate unique videoId and attach to request
+        const videoId = randomUUID();
+        req.videoId = videoId;
+
+        // Create video-specific directory: /videos/{videoId}/
+        const videoDir = path.join(process.cwd(), 'videos', videoId);
+
+        // Ensure directory exists
+        fs.mkdirSync(videoDir, { recursive: true });
+
+        cb(null, videoDir);
     },
     filename: (req, file, cb) => {
-        const uniqueName = Date.now() + Math.round(Math.random() * 1e9);
-        cb(null, uniqueName + path.extname(file.originalname)); // extname is used to keep the original file extension
+        // Preserve original file extension
+        const ext = path.extname(file.originalname);
+        // Save as original.{ext}
+        cb(null, `original${ext}`);
     }
 });
 
-// we can limit the file size and also only allow .mp4 files with multer...coming soon!
-const upload = multer({ storage });
+// File filter for validation
+const fileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    console.log('File upload attempt:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        extension: ext
+    });
+
+    // Check file extension
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`), false);
+    }
+
+    // Check MIME type - also accept application/octet-stream as browsers sometimes send this
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype) && file.mimetype !== 'application/octet-stream') {
+        return cb(new Error(`Invalid MIME type. Received: ${file.mimetype}. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`), false);
+    }
+
+    cb(null, true);
+};
+
+// Configure multer with storage, file filter, and size limits
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: MAX_FILE_SIZE
+    }
+});
 
 export { upload };
