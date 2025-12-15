@@ -76,4 +76,88 @@ const uploadVideo = async (req, res) => {
     }
 };
 
-export { uploadVideo };
+// List all videos
+const listVideos = async (req, res) => {
+    try {
+        // Retrieve all videos, sorted by upload date (newest first)
+        const videos = await Video.find()
+            .sort({ uploadedAt: -1 })
+            .select('-__v'); // Exclude version key
+
+        res.status(200).json({
+            success: true,
+            count: videos.length,
+            data: videos
+        });
+
+    } catch (error) {
+        console.error("Error listing videos:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to retrieve videos",
+            details: error.message
+        });
+    }
+};
+
+// Get video by ID
+const getVideoById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find video by videoId
+        const video = await Video.findOne({ videoId: id }).select('-__v');
+
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                error: "Video not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: video
+        });
+
+    } catch (error) {
+        console.error("Error retrieving video:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to retrieve video",
+            details: error.message
+        });
+    }
+};
+
+// Get magnet URI only
+const getMagnetUri = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find video by videoId, select only magnetURI field
+        const video = await Video.findOne({ videoId: id }).select('magnetURI');
+
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                error: "Video not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            magnetURI: video.magnetURI
+        });
+
+    } catch (error) {
+        console.error("Error retrieving magnet URI:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to retrieve magnet URI",
+            details: error.message
+        });
+    }
+};
+
+export { uploadVideo, listVideos, getVideoById, getMagnetUri };
