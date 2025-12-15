@@ -1,4 +1,4 @@
-import { seedFile } from "../utils/torrent.js";
+import { seedFile, getClientStats } from "../utils/torrent.js";
 import Video from "../models/videoModel.js";
 import path from "path";
 
@@ -160,4 +160,22 @@ const getMagnetUri = async (req, res) => {
     }
 };
 
-export { uploadVideo, listVideos, getVideoById, getMagnetUri };
+// Get seeding statistics
+const getStats = (req, res) => {
+    try {
+        const stats = getClientStats();
+        res.status(200).json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        console.error("Error getting stats:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to get seeding statistics",
+            details: error.message
+        });
+    }
+};
+
+export { uploadVideo, listVideos, getVideoById, getMagnetUri, getStats };
